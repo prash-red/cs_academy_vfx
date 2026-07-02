@@ -1,68 +1,79 @@
-# CS Academy Project
+# CS Academy VFX Workshop — Instructor Guide
 
-> Replace this section with a short description of your project — what it teaches
-> and what a student will build by the end.
+Materials for a 3-day CS Academy (University of Toronto) workshop introducing
+high school students to visual effects, specifically **structure-from-motion
+(SfM)** and inserting a 3D model into a real filmed scene. This README is for
+the instructor running the workshop, not for students.
 
-This repository is the **default project template** for CS Academy. It defines the
-structure every project should follow. To submit your own project, fork this repo
-(or create a new branch off `main`) and fill in the structure below with your
-lessons, code, notebooks, and data. See [Submitting your project](#submitting-your-project).
+## What the workshop covers
 
-## Installation
+Starting from a short video of a real scene, students:
 
-### 1. Install Python (skip if you already have it)
+1. Extract frames from the video.
+2. Run classical structure-from-motion (via COLMAP / `pycolmap`) to recover
+   the camera's position, orientation, and focal length at every frame, plus a
+   sparse 3D point cloud of the scene.
+3. Define a plane in the scene (e.g. a tabletop) by clicking points in an
+   image.
+4. Render a 3D mesh with Panda3D along the recovered camera track and
+   composite it onto the original footage, so a virtual object appears locked
+   into the scene as the camera moves.
 
-If you're on a fresh laptop with no Python, install it from the official site:
-https://www.python.org/downloads/ (any version >= 3.9).
+Day 3 is where the SfM reconstruction and compositing happen; this repo's
+notebook covers that day.
 
-Verify it's installed:
+## What's in this repo
 
-```bash
-python3 --version
+For now this repo intentionally holds only two things:
+
+- **Slides** for each day's lecture/lesson material (to be added — not yet
+  present in the repo).
+- **Colab notebooks** — the hands-on part students run.
+
+```
+notebooks/
+  day_3_sfm_render_composite.ipynb   # SfM reconstruction + 3D compositing
+data/
+  table.mp4                          # Example input video for the notebook
 ```
 
-### 2. Install dependencies
+There is no local Python environment to install and nothing needs to run
+outside of Google Colab. The `lessons/`, `src/`, `deps/`, `pyproject.toml`,
+`uv.lock`, and `main.py` files are left over from the generic CS Academy
+project template this repo was forked from — they are not used by this
+workshop and can be ignored.
 
-We use [uv](https://docs.astral.sh/uv/). These two commands work identically on
-macOS, Windows, and Linux — `uv sync` creates a virtual environment and installs
-everything listed in `pyproject.toml`:
+## Running the notebook (instructor)
 
-```bash
-pip install uv
-uv sync
-```
+1. Open `notebooks/day_3_sfm_render_composite.ipynb` directly in
+   [Google Colab](https://colab.research.google.com/) (open from GitHub, or
+   upload the file).
+2. Set **Runtime > Change runtime type > T4 GPU or better**. The SfM
+   reconstruction cell runs `pycolmap`'s feature extraction/matching on CUDA
+   and raises an error instead of silently falling back to CPU if no GPU is
+   attached.
+3. Run the cells in order. The first cell installs the dependencies not
+   preinstalled on Colab (`pycolmap-cuda12`, `absl-py`), pinned to match the
+   runtime's driver — everything else (`ffmpeg`, `opencv`, `numpy`, `PIL`,
+   `plotly`, `matplotlib`, `scipy`) is already on the default Colab runtime.
+4. When prompted, upload a video, or use `data/table.mp4` as a ready-made
+   example to demo the pipeline or as a fallback if a student's own footage
+   doesn't reconstruct well.
 
-(No manual "activate" step needed — `uv run` below always uses the right environment.)
+Before running this with a class, it's worth doing a full dry run yourself:
+capture (or reuse `table.mp4`) a short, well-lit, slow-panning clip of a
+static scene with plenty of texture, and confirm the reconstruction and
+compositing cells complete end-to-end on a fresh Colab GPU runtime.
 
-### 3. Verify the install
+### Tips for running it live with students
 
-Run this quick test — it imports the core libraries:
-
-```bash
-uv run python -c "import numpy; print('All dependencies installed correctly!')"
-```
-
-If it prints `All dependencies installed correctly!` with no errors, you're ready to go.
-
-## Project Structure
-
-| Directory     | What goes here                                                        |
-| ------------- | -------------------------------------------------------------------- |
-| `lessons/`    | Written explanations of the concepts, in order of progression. Start with `lessons/README.md`. |
-| `src/`        | Core utility functions — your project's reusable library.            |
-| `notebooks/`  | Jupyter notebooks where students fill out and run code.              |
-| `data/`       | Datasets and assets (meshes, images, etc.) used by the project.      |
-| `deps/`       | Optional local / vendored dependencies (see `pyproject.toml`).       |
-
-Add your project's dependencies in `pyproject.toml`.
-
-## Submitting your project
-
-1. **Fork** this repository, or create a **new branch** off `main`.
-2. Keep the directory structure above; fill each folder with your own content.
-3. Update this `README.md`, `pyproject.toml`, and `lessons/README.md` to describe
-   your project.
-4. Submit your fork or branch for review.
-
-For a complete worked example, see the `skinning` branch — an "Introduction to
-Skinning" project built on top of this exact template.
+- Have students shoot slow, steady pans with visible texture (avoid blank
+  walls, reflective/transparent surfaces, and moving subjects) — SfM quality
+  depends heavily on footage quality, and this is the most common source of
+  a failed reconstruction.
+- The "filter blurry frames" and "verify SfM worked" cells are the natural
+  checkpoints to pause at and check that everyone's reconstruction succeeded
+  before moving on to compositing.
+- Each Colab session needs a GPU runtime re-selected and dependencies
+  reinstalled from scratch, so budget a few minutes at the start of the
+  session for that.
